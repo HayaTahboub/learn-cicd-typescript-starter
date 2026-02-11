@@ -6,8 +6,10 @@ on:
 
 jobs:
   Deploy:
-    name: Deploy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # <-- needed for OIDC auth
 
     steps:
       - name: Check out code
@@ -24,12 +26,11 @@ jobs:
       - name: Build app
         run: npm run build
 
-      # ------------- GCP Setup ----------------
-      - name: Authenticate to GCP
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to GCP via OIDC
+        uses: google-github-actions/auth@v1
         with:
-          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-          project_id: notely-487119
+          workload_identity_provider: "projects/487119/locations/global/workloadIdentityPools/github-pool/providers/github"
+          service_account: "notely-deployer@notely-487119.iam.gserviceaccount.com"
 
       - name: Build & Push Docker image
         run: |
